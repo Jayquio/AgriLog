@@ -1,27 +1,29 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   getAuth,
   createUserWithEmailAndPassword,
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
-} from "firebase/auth";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+  User as FirebaseUser,
+} from 'firebase/auth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { getFirestore, doc, setDoc } from 'firebase/firestore';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -29,18 +31,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Logo } from "../icons";
-import { Separator } from "../ui/separator";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { Logo } from '../icons';
+import { Separator } from '../ui/separator';
+import type { User } from '@/lib/types';
 
 const formSchema = z.object({
-  fullName: z.string().min(1, { message: "Full name is required." }),
-  email: z.string().email({ message: "Please enter a valid email." }),
+  fullName: z.string().min(1, { message: 'Full name is required.' }),
+  email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z
     .string()
-    .min(6, { message: "Password must be at least 6 characters." }),
+    .min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
 export function RegisterForm() {
@@ -51,11 +54,23 @@ export function RegisterForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: "",
-      email: "",
-      password: "",
+      fullName: '',
+      email: '',
+      password: '',
     },
   });
+
+  async function createFirestoreUser(firebaseUser: FirebaseUser) {
+    const firestore = getFirestore();
+    const userRef = doc(firestore, 'users', firebaseUser.uid);
+    const newUser: User = {
+      id: firebaseUser.uid,
+      name: firebaseUser.displayName || 'New User',
+      email: firebaseUser.email || '',
+      isAdmin: false, // All new users are not admins by default
+    };
+    await setDoc(userRef, newUser, { merge: true });
+  }
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -69,12 +84,16 @@ export function RegisterForm() {
       await updateProfile(userCredential.user, {
         displayName: values.fullName,
       });
-      router.push("/dashboard");
+
+      // After creating the auth user, create their profile in Firestore
+      await createFirestoreUser(userCredential.user);
+
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
-        title: "Registration Failed",
+        title: 'Registration Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -86,13 +105,15 @@ export function RegisterForm() {
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push("/dashboard");
+      const result = await signInWithPopup(auth, provider);
+      // After signing in with Google, create their profile in Firestore
+      await createFirestoreUser(result.user);
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
-        title: "Registration Failed",
+        title: 'Registration Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -101,9 +122,11 @@ export function RegisterForm() {
 
   return (
     <Card className="mx-auto max-w-sm w-full">
-       <CardHeader className="text-center">
-         <Logo className="mx-auto h-12 w-12 text-primary" />
-        <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
+      <CardHeader className="text-center">
+        <Logo className="mx-auto h-12 w-12 text-primary" />
+        <CardTitle className="text-2xl font-headline">
+          Create an Account
+        </CardTitle>
         <CardDescription>
           Enter your information to create an account
         </CardDescription>
@@ -151,11 +174,11 @@ export function RegisterForm() {
               )}
             />
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create an account"}
+              {isLoading ? 'Creating account...' : 'Create an account'}
             </Button>
           </form>
         </Form>
-         <Separator className="my-6" />
+        <Separator className="my-6" />
         <Button
           variant="outline"
           className="w-full"
@@ -165,7 +188,7 @@ export function RegisterForm() {
           Sign up with Google
         </Button>
         <div className="mt-4 text-center text-sm">
-          Already have an account?{" "}
+          Already have an account?{' '}
           <Link href="/login" className="underline">
             Login
           </Link>

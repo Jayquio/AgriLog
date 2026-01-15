@@ -17,10 +17,11 @@ export type FarmRecordWithProfit = FarmRecord & {
   profit: number;
 };
 
-export type Farmer = {
+export type User = {
   id: string;
   name: string;
-  farmLocation: string;
-  totalArea: number;
-  cropCount: number;
+  email: string;
+  farmLocation?: string;
+  totalArea?: number;
+  isAdmin?: boolean;
 };

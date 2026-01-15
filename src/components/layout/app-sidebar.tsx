@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Sidebar,
   SidebarHeader,
@@ -10,8 +10,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-} from "@/components/ui/sidebar";
-import { Logo } from "@/components/icons";
+} from '@/components/ui/sidebar';
+import { Logo } from '@/components/icons';
 import {
   LayoutDashboard,
   BookText,
@@ -20,25 +20,33 @@ import {
   Shield,
   Settings,
   HelpCircle,
-} from "lucide-react";
-import { useUser } from "@/firebase/auth/use-user";
+} from 'lucide-react';
+import { useUser } from '@/firebase/auth/use-user';
+import { useDoc } from '@/firebase';
 
 const menuItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/dashboard/records", icon: BookText, label: "Farm Records" },
-  { href: "/dashboard/yield-prediction", icon: LineChart, label: "Yield Prediction" },
-  { href: "/dashboard/analysis", icon: PieChart, label: "Cost Analysis" },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/dashboard/records', icon: BookText, label: 'Farm Records' },
+  {
+    href: '/dashboard/yield-prediction',
+    icon: LineChart,
+    label: 'Yield Prediction',
+  },
+  { href: '/dashboard/analysis', icon: PieChart, label: 'Cost Analysis' },
 ];
 
 const adminMenuItems = [
-  { href: "/dashboard/admin", icon: Shield, label: "Admin Panel" },
+  { href: '/dashboard/admin', icon: Shield, label: 'Admin Panel' },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
-  // This is a placeholder for admin role check
-  const isAdmin = true; 
+  const { data: userProfile } = useDoc<any>(
+    user ? `users/${user.uid}` : null
+  );
+
+  const isAdmin = userProfile?.isAdmin === true;
 
   const allMenuItems = isAdmin ? [...menuItems, ...adminMenuItems] : menuItems;
 
@@ -73,13 +81,13 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: "Settings" }}>
+            <SidebarMenuButton tooltip={{ children: 'Settings' }}>
               <Settings />
               <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={{ children: "Support" }}>
+            <SidebarMenuButton tooltip={{ children: 'Support' }}>
               <HelpCircle />
               <span>Support</span>
             </SidebarMenuButton>
