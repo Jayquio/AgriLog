@@ -9,7 +9,7 @@ import {
   costVsProfitAnalysis,
   CostVsProfitAnalysisInput,
 } from "@/ai/flows/cost-vs-profit-analysis";
-import { farmRecords as allFarmRecords } from "@/lib/data";
+import type { FarmRecord } from "@/lib/types";
 
 const yieldPredictionSchema = z.object({
   cropType: z.string().min(1, "Crop type is required."),
@@ -35,10 +35,26 @@ export async function getYieldPrediction(prevState: any, formData: FormData) {
     };
   }
 
+  // Note: In a real app, you'd fetch relevant past data from Firestore
+  const mockPastData = [
+    {
+      "cropType": "Rice",
+      "harvestQuantity": 120,
+      "area": 2,
+      "expenses": 15000
+    },
+     {
+      "cropType": "Rice",
+      "harvestQuantity": 130,
+      "area": 2,
+      "expenses": 16500
+    }
+  ];
+
   try {
     const input: YieldPredictionInput = {
       ...validatedFields.data,
-      pastHarvestData: JSON.stringify(allFarmRecords.slice(0, 2)), // Use some mock past data
+      pastHarvestData: JSON.stringify(mockPastData), 
     };
     const result = await yieldPrediction(input);
     return { message: "success", data: result };
@@ -48,10 +64,10 @@ export async function getYieldPrediction(prevState: any, formData: FormData) {
   }
 }
 
-export async function getCostVsProfitAnalysis() {
+export async function getCostVsProfitAnalysis(farmRecords: FarmRecord[]) {
   try {
     const input: CostVsProfitAnalysisInput = {
-      farmRecords: allFarmRecords,
+      farmRecords: farmRecords,
     };
     const result = await costVsProfitAnalysis(input);
     return { message: "success", data: result };

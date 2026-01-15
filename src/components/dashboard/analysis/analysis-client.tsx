@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { getCostVsProfitAnalysis } from "@/actions";
 import {
   Card,
@@ -14,6 +14,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Lightbulb, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUser } from "@/firebase/auth/use-user";
+import { useCollection, useFirestore } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
 
 type AnalysisState = {
   message: string;
@@ -23,13 +26,30 @@ type AnalysisState = {
 };
 
 export function AnalysisClient() {
+  const { user } = useUser();
+  const firestore = useFirestore();
   const [isPending, startTransition] = useTransition();
   const [analysisResult, setAnalysisResult] = useState<AnalysisState | null>(null);
   const { toast } = useToast();
 
+  const farmRecordsQuery = useMemo(() => {
+    if (!user) return null;
+    return query(collection(firestore, "farmRecords"), where("farmerId", "==", user.uid));
+  }, [user, firestore]);
+
+  const { data: farmRecords, loading: recordsLoading } = useCollection<any>(farmRecordsQuery!);
+
   const handleAnalysis = () => {
     startTransition(async () => {
-      const result = await getCostVsProfitAnalysis();
+      if (!farmRecords || farmRecords.length === 0) {
+        toast({
+          title: "No data to analyze",
+          description: "Please add some farm records first.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const result = await getCostVsProfitAnalysis(farmRecords);
       if (result.message !== "success") {
         toast({
           title: "Error",
@@ -52,8 +72,8 @@ export function AnalysisClient() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={handleAnalysis} disabled={isPending}>
-            {isPending ? "Analyzing..." : "Analyze My Farm Data"}
+          <Button onClick={handleAnalysis} disabled={isPending || recordsLoading}>
+            {isPending ? "Analyzing..." : recordsLoading ? "Loading records..." : "Analyze My Farm Data"}
           </Button>
         </CardContent>
       </Card>

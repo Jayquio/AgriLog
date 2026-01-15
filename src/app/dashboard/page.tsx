@@ -1,3 +1,5 @@
+'use client';
+
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -5,11 +7,17 @@ import Link from "next/link";
 import { Overview } from "@/components/dashboard/overview";
 import { YieldOverTimeChart } from "@/components/dashboard/yield-over-time-chart";
 import { RecentRecords } from "@/components/dashboard/recent-records";
-import { farmRecords } from "@/lib/data";
 import type { FarmRecordWithProfit } from "@/lib/types";
+import { useUser } from "@/firebase/auth/use-user";
+import { useCollection } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
+import { useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-function getRecordsWithProfit(): FarmRecordWithProfit[] {
-  return farmRecords.map((record) => {
+function getRecordsWithProfit(records: any[]): FarmRecordWithProfit[] {
+  if (!records) return [];
+  return records.map((record) => {
     const revenue = record.harvestQuantity * record.marketPrice;
     const profit = revenue - record.expenses;
     return { ...record, revenue, profit };
@@ -17,12 +25,52 @@ function getRecordsWithProfit(): FarmRecordWithProfit[] {
 }
 
 export default function DashboardPage() {
-  const recordsWithProfit = getRecordsWithProfit();
+  const { user, loading: userLoading } = useUser();
+  const firestore = useFirestore();
+
+  const farmRecordsQuery = useMemo(() => {
+    if (!user) return null;
+    return query(collection(firestore, "farmRecords"), where("farmerId", "==", user.uid));
+  }, [user, firestore]);
+
+  const { data: farmRecords, loading: recordsLoading } = useCollection<any>(farmRecordsQuery!);
+
+  const recordsWithProfit = useMemo(() => getRecordsWithProfit(farmRecords), [farmRecords]);
+
+  const loading = userLoading || recordsLoading;
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-8">
+        <PageHeader
+          title="Welcome Back!"
+          description="Here's an overview of your farm's performance."
+        >
+          <Button asChild>
+            <Link href="/dashboard/records">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add New Record
+            </Link>
+          </Button>
+        </PageHeader>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Skeleton className="h-80" />
+          <Skeleton className="h-80" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Welcome Back, Farmer Juan!"
+        title={`Welcome Back, ${user?.displayName?.split(' ')[0] || 'Farmer'}!`}
         description="Here's an overview of your farm's performance."
       >
         <Button asChild>
