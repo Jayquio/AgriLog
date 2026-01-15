@@ -67,8 +67,8 @@ export function RegisterForm() {
       id: firebaseUser.uid,
       name: firebaseUser.displayName || 'New User',
       email: firebaseUser.email || '',
-      // Automatically assign admin role if the email matches
-      isAdmin: firebaseUser.email === 'admin@bayanihan.farm',
+      // All new users are farmers by default.
+      isAdmin: false,
     };
     await setDoc(userRef, newUser, { merge: true });
   }
@@ -129,7 +129,7 @@ export function RegisterForm() {
           Create an Account
         </CardTitle>
         <CardDescription>
-          Enter your information to create an account
+          Enter your information to create a farmer account
         </CardDescription>
       </CardHeader>
       <CardContent>

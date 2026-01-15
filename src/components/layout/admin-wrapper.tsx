@@ -5,13 +5,17 @@ import { useDoc } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Logo } from '../icons';
+import { doc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/provider';
 
 export function AdminWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
-  
+  const firestore = useFirestore();
+
+  const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
   const { data: userProfile, loading: profileLoading } = useDoc<any>(
-    user ? `users/${user.uid}` : null
+    userDocRef
   );
 
   const loading = userLoading || profileLoading;
