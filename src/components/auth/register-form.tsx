@@ -67,7 +67,8 @@ export function RegisterForm() {
       id: firebaseUser.uid,
       name: firebaseUser.displayName || 'New User',
       email: firebaseUser.email || '',
-      isAdmin: false, // All new users are not admins by default
+      // Automatically assign admin role if the email matches
+      isAdmin: firebaseUser.email === 'admin@bayanihan.farm',
     };
     await setDoc(userRef, newUser, { merge: true });
   }
