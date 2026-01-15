@@ -30,7 +30,11 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
+  const userDocRef = useMemo(() => {
+    if (!user) return null;
+    return doc(firestore, `users/${user.uid}`);
+  },[user, firestore]);
+
   const { data: userProfile, loading: profileLoading } = useDoc<any>(userDocRef);
 
   const farmRecordsQuery = useMemo(() => {
@@ -38,20 +42,24 @@ export default function DashboardPage() {
     return query(collection(firestore, "farmRecords"), where("farmerId", "==", user.uid));
   }, [user, firestore]);
 
-  const { data: farmRecords, loading: recordsLoading } = useCollection<any>(farmRecordsQuery!);
+  const { data: farmRecords, loading: recordsLoading } = useCollection<any>(farmRecordsQuery);
+
+  const loading = userLoading || profileLoading || !userProfile;
+  const isAdmin = userProfile?.isAdmin;
+
 
   useEffect(() => {
-    if (userProfile && userProfile.isAdmin) {
+    // Only redirect when loading is complete and the user's admin status is confirmed.
+    if (!loading && isAdmin) {
       router.replace('/dashboard/admin');
     }
-  }, [userProfile, router]);
+  }, [loading, isAdmin, router]);
 
 
   const recordsWithProfit = useMemo(() => getRecordsWithProfit(farmRecords), [farmRecords]);
 
-  const loading = userLoading || recordsLoading || profileLoading;
 
-  if (loading || (userProfile && userProfile.isAdmin)) { // Prevent rendering farmer dashboard for admin
+  if (loading || isAdmin) { // Prevent rendering farmer dashboard for admin while redirecting
     return (
       <div className="flex flex-col gap-8">
         <PageHeader
