@@ -11,7 +11,7 @@ import {
 import { useFirestore } from '@/firebase';
 
 export function useDoc<T = DocumentData>(
-  docPath: string | DocumentReference
+  docPath: string | DocumentReference | null
 ) {
   const db = useFirestore();
   const [data, setData] = useState<T | null>(null);
@@ -19,6 +19,11 @@ export function useDoc<T = DocumentData>(
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!docPath) {
+      setLoading(false);
+      return;
+    }
+
     let ref: DocumentReference;
     if (typeof docPath === 'string') {
       ref = doc(db, docPath);
