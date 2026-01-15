@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 import { getYieldPrediction } from "@/actions";
 import {
   Card,
@@ -16,7 +17,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Lightbulb, TrendingUp } from "lucide-react";
-import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const initialState = {
@@ -33,7 +33,7 @@ function SubmitButton() {
 }
 
 export function PredictionClient() {
-  const [state, formAction] = useFormState(getYieldPrediction, initialState);
+  const [state, formAction] = useActionState(getYieldPrediction, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export function PredictionClient() {
               <div>
                 <Label className="text-sm">Predicted Yield</Label>
                 <p className="text-3xl font-bold font-headline text-primary">
-                  {state.data.predictedYield.toLocaleString()}{" "}
+                  {(state.data as any).predictedYield.toLocaleString()}{" "}
                   <span className="text-lg font-normal text-foreground">
                     sacks/kg
                   </span>
@@ -124,13 +124,13 @@ export function PredictionClient() {
               <div>
                 <Label className="text-sm">Confidence Score</Label>
                 <p className="text-xl font-semibold">
-                  {Math.round(state.data.confidence * 100)}%
+                  {Math.round((state.data as any).confidence * 100)}%
                 </p>
               </div>
               <Alert>
                 <Lightbulb className="h-4 w-4" />
                 <AlertTitle>Insights & Recommendations</AlertTitle>
-                <AlertDescription>{state.data.insights}</AlertDescription>
+                <AlertDescription>{(state.data as any).insights}</AlertDescription>
               </Alert>
             </CardContent>
           </Card>
