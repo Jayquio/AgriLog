@@ -1,14 +1,7 @@
 'use server';
-/**
- * @fileOverview A yield prediction AI agent.
- *
- * - yieldPrediction - A function that handles the yield prediction process.
- * - YieldPredictionInput - The input type for the yieldPrediction function.
- * - YieldPredictionOutput - The return type for the yieldPrediction function.
- */
 
-import {getAi} from '@/ai/genkit';
-import {z} from 'genkit';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
 
 const YieldPredictionInputSchema = z.object({
   cropType: z.string().describe('The type of crop (e.g., rice, corn, banana, vegetables).'),
@@ -27,44 +20,54 @@ const YieldPredictionOutputSchema = z.object({
 });
 export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
 
-
-function buildYieldPrompt(input: YieldPredictionInput): string {
-    return `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
-
-Your response MUST be a valid JSON object with the following keys: "predictedYield" (number), "confidence" (a number between 0 and 1), and "insights" (string).
-
-Your analysis should be based on the following information:
-
-Crop Type: ${input.cropType}
-Planting Date: ${input.plantingDate}
-Area (hectares): ${input.area}
-Expenses (₱): ${input.expenses}
-Inputs Used: ${input.inputsUsed}
-Past Harvest Data: ${input.pastHarvestData}
-`;
-}
-
-
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
-    const ai = getAi();
-    const promptText = buildYieldPrompt(input);
+  const validationResult = YieldPredictionInputSchema.safeParse(input);
+  if (!validationResult.success) {
+    throw new Error("Invalid data format for yield prediction");
+  }
+  
+  const { cropType, plantingDate, area, expenses, inputsUsed, pastHarvestData } = validationResult.data;
+
+  const apiKey = process.env.GOOGLE_GENAI_API_KEY;
+  if (!apiKey) throw new Error("Missing API Key for Google AI");
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+  const promptText = `
+    You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
+
+    Your response MUST be a valid JSON object with the following keys: "predictedYield" (number), "confidence" (a number between 0 and 1), and "insights" (string).
+
+    Your analysis should be based on the following information:
+
+    Crop Type: ${cropType}
+    Planting Date: ${plantingDate}
+    Area (hectares): ${area}
+    Expenses (₱): ${expenses}
+    Inputs Used: ${inputsUsed}
+    Past Harvest Data: ${pastHarvestData}
+  `;
+
+  try {
+    const result = await model.generateContent(promptText);
+    const response = result.response;
+    const text = response.text();
+
+    // The AI might wrap the JSON in markdown, so we clean it.
+    const cleanedJson = text.replace(/```json\n?/g, '').replace(/```/g, '').trim();
+    const parsedOutput = JSON.parse(cleanedJson);
     
-    const response = await ai.generate({
-        prompt: promptText,
-    });
-    
-    const jsonString = response.text;
-    if (!jsonString) {
-      throw new Error('AI failed to return a prediction.');
+    // Validate the output to ensure it matches the schema
+    const outputValidation = YieldPredictionOutputSchema.safeParse(parsedOutput);
+    if (!outputValidation.success) {
+      throw new Error("AI returned data in an unexpected format.");
     }
 
-    try {
-      // The AI might wrap the JSON in markdown, so we clean it.
-      const cleanedJson = jsonString.replace(/```json\n?/g, '').replace(/```/g, '').trim();
-      const parsedOutput = JSON.parse(cleanedJson);
-      return parsedOutput;
-    } catch (e) {
-      console.error("Failed to parse AI JSON response:", jsonString, e);
-      throw new Error("The AI returned an unexpected format. Please try again.");
-    }
+    return outputValidation.data;
+
+  } catch (error: any) {
+    console.error("AI Error (Yield Prediction):", error);
+    throw new Error("AI request failed for yield prediction: " + error.message);
+  }
 }
