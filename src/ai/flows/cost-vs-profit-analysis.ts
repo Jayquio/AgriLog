@@ -61,8 +61,8 @@ export async function costVsProfitAnalysis(
     const response = await result.response;
     const text = response.text();
     return {analysis: text};
-  } catch (error) {
+  } catch (error: any) {
     console.error('Google AI Error:', error);
-    throw new Error('The AI failed to generate a response. Please try again.');
+    throw new Error(`The AI failed to generate a response. The API returned the following error: ${error.message}`);
   }
 }

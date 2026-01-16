@@ -70,8 +70,8 @@ Your analysis should be based on the following information:
     
     return parsedOutput.data;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Google AI Error:', error);
-    throw new Error('The AI failed to generate a prediction. Please try again.');
+    throw new Error(`The AI failed to generate a prediction. The API returned the following error: ${error.message}`);
   }
 }
