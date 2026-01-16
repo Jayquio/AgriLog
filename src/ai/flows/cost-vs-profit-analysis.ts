@@ -29,14 +29,11 @@ const CostVsProfitAnalysisOutputSchema = z.object({
 });
 export type CostVsProfitAnalysisOutput = z.infer<typeof CostVsProfitAnalysisOutputSchema>;
 
-// This is now a standard async function, compliant with "use server"
-export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
-  // The AI prompt is defined on-demand inside the function
-  const prompt = ai.definePrompt({
-    name: 'costVsProfitAnalysisPrompt',
-    input: {schema: CostVsProfitAnalysisInputSchema},
-    output: {schema: CostVsProfitAnalysisOutputSchema},
-    prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
+const prompt = ai.definePrompt({
+  name: 'costVsProfitAnalysisPrompt',
+  input: {schema: CostVsProfitAnalysisInputSchema},
+  output: {schema: CostVsProfitAnalysisOutputSchema},
+  prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
 
     Analyze the provided farm records to identify cost trends and profit margins over time. For each record, calculate the revenue (harvestQuantity * marketPrice) and the profit (revenue - expenses).
 
@@ -47,12 +44,21 @@ export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Pr
     - Crop Type: {{cropType}}, Harvest Date: {{harvestDate}}, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}}, Market Price: ₱{{marketPrice}}/unit
     {{/each}}
     `,
-  });
+});
 
-  // Execute the prompt and return the output
-  const {output} = await prompt(input);
-  if (!output) {
-      throw new Error("AI analysis returned no output.");
+const costVsProfitAnalysisFlow = ai.defineFlow(
+  {
+    name: 'costVsProfitAnalysisFlow',
+    inputSchema: CostVsProfitAnalysisInputSchema,
+    outputSchema: CostVsProfitAnalysisOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
   }
-  return output;
+);
+
+
+export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
+  return costVsProfitAnalysisFlow(input);
 }
