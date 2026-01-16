@@ -1,12 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   onSnapshot,
-  query,
-  collection,
-  where,
-  getDocs,
+  collection as collectionFn,
   type Query,
   type DocumentData,
   type CollectionReference,
@@ -19,18 +16,22 @@ export function useCollection<T = DocumentData>(
 ) {
   const db = useFirestore();
   const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(!!collectionPath);
   const [error, setError] = useState<Error | null>(null);
+  const prevIdsRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!collectionPath) {
+      setData([]);
       setLoading(false);
       return;
     }
-    
+
+    setLoading(true);
+
     let ref: Query | CollectionReference;
     if (typeof collectionPath === 'string') {
-      ref = collection(db, collectionPath);
+      ref = collectionFn(db, collectionPath);
     } else {
       ref = collectionPath;
     }
@@ -42,7 +43,14 @@ export function useCollection<T = DocumentData>(
         snapshot.forEach((doc) => {
           result.push({ id: doc.id, ...doc.data() } as T);
         });
-        setData(result);
+
+        const idsKey = JSON.stringify(result.map((r: any) => r.id));
+        if (prevIdsRef.current !== idsKey) {
+          prevIdsRef.current = idsKey;
+          setData(result);
+        }
+
+        // Set loading false only if data has changed or if there's an error
         setLoading(false);
       },
       (err) => {
