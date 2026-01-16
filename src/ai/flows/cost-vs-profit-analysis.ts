@@ -29,28 +29,34 @@ const CostVsProfitAnalysisOutputSchema = z.object({
 });
 export type CostVsProfitAnalysisOutput = z.infer<typeof CostVsProfitAnalysisOutputSchema>;
 
-const ai = getAi();
+function buildPrompt(input: CostVsProfitAnalysisInput): string {
+  const recordsString = input.farmRecords
+    .map(
+      (record) =>
+        `- Crop Type: ${record.cropType}, Harvest Date: ${record.harvestDate}, Expenses: ₱${record.expenses}, Harvest Quantity: ${record.harvestQuantity}, Market Price: ₱${record.marketPrice}/unit`
+    )
+    .join('\n');
 
-const costVsProfitAnalysisPrompt = ai.definePrompt({
-    name: 'costVsProfitAnalysisPrompt',
-    input: {schema: CostVsProfitAnalysisInputSchema},
-    output: {schema: CostVsProfitAnalysisOutputSchema},
-    prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
+  return `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
 
     Analyze the provided farm records to identify cost trends and profit margins over time. For each record, calculate the revenue (harvestQuantity * marketPrice) and the profit (revenue - expenses).
 
     Provide a clear and actionable report. Start with a summary of overall profitability. Then, group your analysis by crop type if multiple types are present. For each crop, discuss cost trends, revenue, and profit margins. Finally, provide specific, actionable recommendations for optimizing expenses and improving profitability.
 
     Farm Records:
-    {{#each farmRecords}}
-    - Crop Type: {{cropType}}, Harvest Date: {{harvestDate}}, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}}, Market Price: ₱{{marketPrice}}/unit
-    {{/each}}
-    `,
-});
-
+    ${recordsString}
+    `;
+}
 
 export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
-  const {output} = await costVsProfitAnalysisPrompt(input);
+  const ai = getAi();
+  const promptText = buildPrompt(input);
+
+  const { output } = await ai.generate({
+    prompt: promptText,
+    output: { schema: CostVsProfitAnalysisOutputSchema },
+  });
+
   if (!output) {
     throw new Error("AI failed to return an analysis.");
   }

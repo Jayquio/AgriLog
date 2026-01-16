@@ -27,27 +27,32 @@ const YieldPredictionOutputSchema = z.object({
 });
 export type YieldPredictionOutput = z.infer<typeof YieldPredictionOutputSchema>;
 
-const ai = getAi();
 
-const yieldPredictionPrompt = ai.definePrompt({
-  name: 'yieldPredictionPrompt',
-  input: {schema: YieldPredictionInputSchema},
-  output: {schema: YieldPredictionOutputSchema},
-  prompt: `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
+function buildYieldPrompt(input: YieldPredictionInput): string {
+    return `You are an AI-powered agricultural advisor for Filipino farmers. Based on the historical data, crop type, planting date, expenses, and inputs, predict the yield for the farm.
 
 Provide a predicted yield in sacks/kg, a confidence score (0-1), and insights with planting recommendations. Your analysis should be based on the following information.
 
-Crop Type: {{cropType}}
-Planting Date: {{plantingDate}}
-Area (hectares): {{area}}
-Expenses (₱): {{expenses}}
-Inputs Used: {{inputsUsed}}
-Past Harvest Data: {{pastHarvestData}}
-`,
-});
+Crop Type: ${input.cropType}
+Planting Date: ${input.plantingDate}
+Area (hectares): ${input.area}
+Expenses (₱): ${input.expenses}
+Inputs Used: ${input.inputsUsed}
+Past Harvest Data: ${input.pastHarvestData}
+`;
+}
+
 
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
-    const {output} = await yieldPredictionPrompt(input);
+    const ai = getAi();
+
+    const promptText = buildYieldPrompt(input);
+    
+    const {output} = await ai.generate({
+        prompt: promptText,
+        output: { schema: YieldPredictionOutputSchema },
+    });
+    
     if (!output) {
       throw new Error('AI failed to return a prediction.');
     }
