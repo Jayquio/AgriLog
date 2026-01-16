@@ -174,63 +174,121 @@ export function RecordsClient({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Crop</TableHead>
-                  <TableHead>Planting Date</TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    Expenses
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell">Profit</TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {records.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-medium">
-                      {record.cropType}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(record.plantingDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {formatCurrency(record.expenses)}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {formatCurrency(record.profit)}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleEditClick(record)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => deleteRecord(record.id)}
-                            className="text-destructive"
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            {/* ===== MOBILE VIEW ===== */}
+            <div className="space-y-4 md:hidden">
+              {records.map((record) => (
+                <div key={record.id} className="rounded-lg border p-4 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{record.cropType}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Planted: {new Date(record.plantingDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          aria-haspopup="true"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleEditClick(record)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => deleteRecord(record.id)}
+                          className="text-destructive"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                          <p className="text-muted-foreground">Harvested</p>
+                          <p>{new Date(record.harvestDate).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                          <p className="text-muted-foreground">Yield</p>
+                          <p>{record.harvestQuantity} {record.cropType === 'Vegetables' || record.cropType === 'Banana' ? 'kg' : 'sacks'}</p>
+                      </div>
+                      <div>
+                          <p className="text-muted-foreground">Expenses</p>
+                          <p>{formatCurrency(record.expenses)}</p>
+                      </div>
+                      <div>
+                          <p className="text-muted-foreground">Profit</p>
+                          <p className={`${record.profit >= 0 ? 'text-primary' : 'text-destructive'}`}>{formatCurrency(record.profit)}</p>
+                      </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ===== DESKTOP VIEW ===== */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Crop</TableHead>
+                    <TableHead>Planting Date</TableHead>
+                    <TableHead>Expenses</TableHead>
+                    <TableHead>Profit</TableHead>
+                    <TableHead>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {records.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium">
+                        {record.cropType}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(record.plantingDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrency(record.expenses)}
+                      </TableCell>
+                      <TableCell className={`${record.profit >= 0 ? '' : 'text-destructive'}`}>
+                        {formatCurrency(record.profit)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup="true"
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleEditClick(record)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => deleteRecord(record.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
           <CardFooter>
             <div className="text-xs text-muted-foreground">
