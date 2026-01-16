@@ -18,10 +18,11 @@ service cloud.firestore {
     }
 
     // /users/{userId}
-    // Users can read and write to their own user document. Admins can read all user docs.
+    // Users can read and write to their own user document. Admins can read/list all user docs.
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow write: if isOwner(userId);
+      allow list: if isAdmin();
     }
     
     // /farmRecords/{farmRecordId}
@@ -31,7 +32,7 @@ service cloud.firestore {
        allow create: if isSignedIn() && request.resource.data.farmerId == request.auth.uid;
        allow update: if isSignedIn() && resource.data.farmerId == request.auth.uid && request.resource.data.farmerId == resource.data.farmerId;
        
-       // Users can only list their own records. Admins can list all.
+       // Users can only list their own records (via query). Admins can list all.
        allow list: if isSignedIn();
     }
   }

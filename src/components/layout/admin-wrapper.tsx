@@ -18,30 +18,30 @@ export function AdminWrapper({ children }: { children: React.ReactNode }) {
     userDocRef
   );
 
-  // We are loading if the user is loading, OR if the user is loaded but their profile isn't yet.
-  const loading = userLoading || (!!user && profileLoading);
-  const isAdmin = userProfile?.isAdmin === true;
+  const doneLoading = !userLoading && !profileLoading;
+  const isDefinitelyAdmin = doneLoading && userProfile?.isAdmin === true;
 
   useEffect(() => {
-    // Once loading is complete, if the user is not an admin, redirect them.
-    if (!loading && !isAdmin) {
+    // Once all data is loaded, if the user is NOT an admin, redirect them away.
+    if (doneLoading && !isDefinitelyAdmin) {
       router.replace('/dashboard');
     }
-  }, [loading, isAdmin, router]);
+  }, [doneLoading, isDefinitelyAdmin, router]);
 
-  // If we are still loading OR if the user is not an admin (and is about to be redirected),
-  // show the loading screen. This prevents any flicker of admin content for non-admin users.
-  if (loading || !isAdmin) {
-    return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
-        <Logo className="h-24 w-24 animate-pulse text-primary" />
-        <p className="mt-4 text-lg text-muted-foreground">
-          Verifying permissions...
-        </p>
-      </div>
-    );
+
+  // If the user is confirmed as an admin, show the dashboard content.
+  if (isDefinitelyAdmin) {
+    return <>{children}</>;
   }
 
-  // Only if loading is complete AND the user is an admin, render the children.
-  return <>{children}</>;
+  // In all other cases (still loading, not an admin, etc.), show the verification
+  // screen. The useEffect above will handle the redirection if necessary.
+  return (
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
+      <Logo className="h-24 w-24 animate-pulse text-primary" />
+      <p className="mt-4 text-lg text-muted-foreground">
+        Verifying permissions...
+      </p>
+    </div>
+  );
 }
