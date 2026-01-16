@@ -9,7 +9,7 @@
  */
 
 import {getAi} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const CostVsProfitAnalysisInputSchema = z.object({
   farmRecords: z.array(

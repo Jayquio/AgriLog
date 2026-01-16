@@ -8,7 +8,7 @@
  */
 
 import {getAi} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const YieldPredictionInputSchema = z.object({
   cropType: z.string().describe('The type of crop (e.g., rice, corn, banana, vegetables).'),
