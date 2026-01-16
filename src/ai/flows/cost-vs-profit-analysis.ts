@@ -29,11 +29,13 @@ const CostVsProfitAnalysisOutputSchema = z.object({
 });
 export type CostVsProfitAnalysisOutput = z.infer<typeof CostVsProfitAnalysisOutputSchema>;
 
-const prompt = ai.definePrompt({
-  name: 'costVsProfitAnalysisPrompt',
-  input: {schema: CostVsProfitAnalysisInputSchema},
-  output: {schema: CostVsProfitAnalysisOutputSchema},
-  prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
+
+export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
+  const prompt = ai.definePrompt({
+    name: 'costVsProfitAnalysisPrompt',
+    input: {schema: CostVsProfitAnalysisInputSchema},
+    output: {schema: CostVsProfitAnalysisOutputSchema},
+    prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
 
     Analyze the provided farm records to identify cost trends and profit margins over time. For each record, calculate the revenue (harvestQuantity * marketPrice) and the profit (revenue - expenses).
 
@@ -44,21 +46,11 @@ const prompt = ai.definePrompt({
     - Crop Type: {{cropType}}, Harvest Date: {{harvestDate}}, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}}, Market Price: ₱{{marketPrice}}/unit
     {{/each}}
     `,
-});
+  });
 
-const costVsProfitAnalysisFlow = ai.defineFlow(
-  {
-    name: 'costVsProfitAnalysisFlow',
-    inputSchema: CostVsProfitAnalysisInputSchema,
-    outputSchema: CostVsProfitAnalysisOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  const {output} = await prompt(input);
+  if (!output) {
+    throw new Error("AI failed to return an analysis.");
   }
-);
-
-
-export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
-  return costVsProfitAnalysisFlow(input);
+  return output;
 }
