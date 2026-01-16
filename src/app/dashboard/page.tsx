@@ -42,24 +42,28 @@ export default function DashboardPage() {
     return query(collection(firestore, "farmRecords"), where("farmerId", "==", user.uid));
   }, [user, firestore]);
 
-  const { data: farmRecords, loading: recordsLoading } = useCollection<any>(farmRecordsQuery);
+  const { data: farmRecords } = useCollection<any>(farmRecordsQuery);
 
-  const loading = userLoading || profileLoading || !userProfile;
-  const isAdmin = userProfile?.isAdmin;
-
+  const initialDataLoading = userLoading || profileLoading;
 
   useEffect(() => {
-    // Only redirect when loading is complete and the user's admin status is confirmed.
-    if (!loading && isAdmin) {
-      router.replace('/dashboard/admin');
+    // Once we are done loading user and profile data...
+    if (!initialDataLoading) {
+      // and we have confirmed the user is an admin...
+      if (userProfile?.isAdmin) {
+        // ...redirect them to the admin page.
+        router.replace('/dashboard/admin');
+      }
     }
-  }, [loading, isAdmin, router]);
+  }, [initialDataLoading, userProfile, router]);
 
 
   const recordsWithProfit = useMemo(() => getRecordsWithProfit(farmRecords), [farmRecords]);
 
 
-  if (loading || isAdmin) { // Prevent rendering farmer dashboard for admin while redirecting
+  // If the initial data is still loading, OR if the user is an admin
+  // (and is currently being redirected), show the loading skeleton.
+  if (initialDataLoading || userProfile?.isAdmin) {
     return (
       <div className="flex flex-col gap-8">
         <PageHeader
@@ -81,6 +85,7 @@ export default function DashboardPage() {
     );
   }
 
+  // Otherwise, render the farmer's dashboard.
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
