@@ -1,64 +1,58 @@
 'use server';
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { z } from 'zod';
+/**
+ * @fileOverview Provides cost vs. profit analysis for farmers.
+ */
 
-// Validate input using standard Zod
+import {getAi} from '@/ai/genkit';
+import {z} from 'genkit';
+
 const CostVsProfitAnalysisInputSchema = z.object({
   farmRecords: z.array(
     z.object({
-      cropType: z.string(),
-      harvestDate: z.string(),
-      expenses: z.number(),
-      harvestQuantity: z.number(),
-      marketPrice: z.number(),
+      cropType: z.string().describe('The type of crop (e.g., rice, corn).'),
+      harvestDate: z.string().describe('The date the crop was harvested (YYYY-MM-DD).'),
+      expenses: z.number().describe('The total expenses for the crop in Philippine pesos.'),
+      harvestQuantity: z.number().describe('The quantity of the harvest in sacks or kilograms.'),
+      marketPrice: z.number().describe('The market price per unit of harvest.'),
     })
   ),
 });
+export type CostVsProfitAnalysisInput = z.infer<typeof CostVsProfitAnalysisInputSchema>;
 
-export async function costVsProfitAnalysis(input: any) {
-  // 1. Validate Input
-  const validationResult = CostVsProfitAnalysisInputSchema.safeParse(input);
-  if (!validationResult.success) {
-    throw new Error("Invalid data format");
-  }
+
+const CostVsProfitAnalysisOutputSchema = z.object({
+  analysis: z.string().describe('A detailed analysis of the farm records, including profitability, cost trends, and actionable recommendations.'),
+});
+export type CostVsProfitAnalysisOutput = z.infer<typeof CostVsProfitAnalysisOutputSchema>;
+
+
+// Get AI instance ONCE at the top level
+const ai = getAi();
+
+// Define prompt OUTSIDE the function so it doesn't crash on re-runs
+const costVsProfitPrompt = ai.definePrompt({
+  name: 'costVsProfitAnalysisPrompt',
+  input: {schema: CostVsProfitAnalysisInputSchema},
+  output: {schema: CostVsProfitAnalysisOutputSchema},
+  prompt: `You are an expert agricultural analyst specializing in providing cost versus profit analysis for farmers in the Philippines.
+
+  Analyze the provided farmRecords to identify cost trends and profit margins over time. For each record, calculate the revenue (harvestQuantity * marketPrice) and the profit (revenue - expenses).
+
+  Provide a clear and actionable report. Start with a summary of overall profitability. Then, group your analysis by crop type if multiple types are present. For each crop, discuss cost trends, revenue, and profit margins. Finally, provide specific, actionable recommendations for optimizing expenses and improving profitability.
+
+  Farm Records:
+  {{#each farmRecords}}
+  - Crop Type: {{cropType}}, Harvest Date: {{harvestDate}}, Expenses: ₱{{expenses}}, Harvest Quantity: {{harvestQuantity}}, Market Price: ₱{{marketPrice}}/unit
+  {{/each}}
+  `,
+});
+
+export async function costVsProfitAnalysis(input: CostVsProfitAnalysisInput): Promise<CostVsProfitAnalysisOutput> {
+  const {output} = await costVsProfitPrompt(input);
   
-  const { farmRecords } = validationResult.data;
-
-  // 2. Initialize AI directly (Make sure GOOGLE_GENAI_API_KEY is in your .env)
-  const apiKey = process.env.GOOGLE_GENAI_API_KEY;
-  if (!apiKey) throw new Error("Missing API Key");
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  
-  // 3. Use the standard model (Flash is fast)
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-  // 4. Construct a simple text prompt (No complex Handlebars templates)
-  const promptText = `
-    You are an expert agricultural analyst. 
-    Analyze these farm records and provide cost vs profit insights.
-    
-    Records:
-    ${JSON.stringify(farmRecords, null, 2)}
-    
-    Instructions: 
-    1. Calculate profit for each (Revenue - Expenses).
-    2. Summarize total profitability.
-    3. Give 3 tips to improve profit.
-  `;
-
-  try {
-    // 5. Call the API
-    const result = await model.generateContent(promptText);
-    const response = result.response;
-    const text = response.text();
-
-    // 6. Return result
-    return { analysis: text };
-
-  } catch (error) {
-    console.error("AI Error:", error);
-    throw new Error("AI request failed: " + error);
+  if (!output) {
+    throw new Error("AI failed to return an analysis.");
   }
+  return output;
 }
