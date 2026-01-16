@@ -42,7 +42,9 @@ export function AppSidebar() {
   const { data: userProfile } = useDoc<any>(userDocRef);
 
   const isAdmin = userProfile?.isAdmin === true;
-  const menuItems = isAdmin ? adminMenuItems : farmerMenuItems;
+  const menuItems = isAdmin
+    ? [...adminMenuItems, ...farmerMenuItems]
+    : farmerMenuItems;
 
   const handleLinkClick = () => {
     setOpenMobile(false);

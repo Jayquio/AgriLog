@@ -2,7 +2,6 @@
 
 import { PageHeader } from '@/components/page-header';
 import { AdminClient } from '@/components/dashboard/admin/admin-client';
-import { AdminWrapper } from '@/components/layout/admin-wrapper';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { useMemo } from 'react';
@@ -31,37 +30,35 @@ export default function AdminPageRoot() {
   const loading = usersLoading || recordsLoading;
 
   return (
-    <AdminWrapper>
-      <div className="flex flex-col gap-8 p-4 md:p-8">
-        <PageHeader
-          title="Admin Dashboard"
-          description="Aggregated data and analytics for all farmers."
-        />
-        {loading ? (
-          <div className="space-y-8">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Skeleton className="h-28" />
-              <Skeleton className="h-28" />
-              <Skeleton className="h-28" />
-              <Skeleton className="h-28" />
-            </div>
-            <Card>
-              <CardHeader>
-                <Skeleton className="h-6 w-1/3" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              </CardContent>
-            </Card>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Admin Dashboard"
+        description="Aggregated data and analytics for all farmers."
+      />
+      {loading ? (
+        <div className="space-y-8">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
           </div>
-        ) : (
-          <AdminClient users={users} farmRecords={farmRecords} />
-        )}
-      </div>
-    </AdminWrapper>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-1/3" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <AdminClient users={users} farmRecords={farmRecords} />
+      )}
+    </div>
   );
 }
