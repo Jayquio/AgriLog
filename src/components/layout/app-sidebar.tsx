@@ -42,9 +42,20 @@ export function AppSidebar() {
   const { data: userProfile } = useDoc<any>(userDocRef);
 
   const isAdmin = userProfile?.isAdmin === true;
-  const menuItems = isAdmin
-    ? [...adminMenuItems, ...farmerMenuItems]
-    : farmerMenuItems;
+
+  const menuItems = useMemo(() => {
+    if (isAdmin) {
+      // If on the admin page, only show admin-related links.
+      if (pathname.startsWith('/admin')) {
+        return adminMenuItems;
+      }
+      // On the farmer dashboard, show farmer links AND an entry to the admin dash.
+      return [...farmerMenuItems, ...adminMenuItems];
+    }
+    // Non-admins only ever see farmer links.
+    return farmerMenuItems;
+  }, [isAdmin, pathname]);
+
 
   const handleLinkClick = () => {
     setOpenMobile(false);
