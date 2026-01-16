@@ -45,13 +45,7 @@ const prompt = ai.definePrompt({
   Inputs Used: {{{inputsUsed}}}
   Past Harvest Data: {{{pastHarvestData}}}
 
-  Provide a predicted yield in sacks/kg, a confidence score (0-1), and insights with planting recommendations.
-  Format the output as a JSON object:
-  {
-    "predictedYield": number,
-    "confidence": number,
-    "insights": string
-  }`,
+  Provide a predicted yield in sacks/kg, a confidence score (0-1), and insights with planting recommendations.`,
 });
 
 const yieldPredictionFlow = ai.defineFlow(
