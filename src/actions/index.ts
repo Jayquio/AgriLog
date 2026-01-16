@@ -51,8 +51,18 @@ export async function getYieldPrediction(prevState: any, formData: FormData) {
 
 export async function getCostVsProfitAnalysis(farmRecords: FarmRecord[]) {
   try {
+    // The AI schema is strict. We must map the records to only include the
+    // fields the AI model is expecting, otherwise Zod validation will fail.
+    const analysisRecords = farmRecords.map((record) => ({
+      cropType: record.cropType,
+      harvestDate: record.harvestDate,
+      expenses: record.expenses,
+      harvestQuantity: record.harvestQuantity,
+      marketPrice: record.marketPrice,
+    }));
+
     const input: CostVsProfitAnalysisInput = {
-      farmRecords: farmRecords,
+      farmRecords: analysisRecords,
     };
     const result = await costVsProfitAnalysis(input);
     return { message: "success", data: result };
