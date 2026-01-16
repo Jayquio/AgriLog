@@ -5,8 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 
 export const metadata: Metadata = {
-  title: "BayanihanAgri Insights",
-  description: "Smart farm logging and analytics for Filipino farmers.",
+  title: "AgriLog",
+  description: "AI-Powered Digital Farm Record & Analytics Platform",
 };
 
 export default function RootLayout({

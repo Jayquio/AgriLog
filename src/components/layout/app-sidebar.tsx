@@ -67,7 +67,7 @@ export function AppSidebar() {
         >
           <Logo className="h-8 w-8 text-primary" />
           <h2 className="font-headline text-lg font-semibold tracking-tight">
-            BayanihanAgri
+            AgriLog
           </h2>
         </Link>
       </SidebarHeader>
