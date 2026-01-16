@@ -14,27 +14,20 @@ export function AdminWrapper({ children }: { children: React.ReactNode }) {
   const firestore = useFirestore();
 
   const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
-  const { data: userProfile, loading: profileLoading } = useDoc<any>(
-    userDocRef
-  );
+  const { data: userProfile, loading: profileLoading } = useDoc<any>(userDocRef);
 
-  // Determine the definitive loading state. We are loading if auth is pending,
-  // or if we have a user but are still waiting for their profile to load.
   const isLoading = userLoading || (user && profileLoading);
 
   useEffect(() => {
-    // This effect should only handle redirection once loading is fully complete.
     if (!isLoading) {
-      // If loading is done and the user is NOT a verified admin, redirect them.
       if (!userProfile?.isAdmin) {
+        // If loading is complete and the user is not an admin, redirect.
         router.replace('/dashboard');
       }
     }
   }, [isLoading, userProfile, router]);
 
-
-  // STATE 1: We are still loading authentication or profile data.
-  // Show the full-screen loader. This is the key to preventing the flicker.
+  // While we are verifying auth and admin status, show the loading screen.
   if (isLoading) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
@@ -46,15 +39,13 @@ export function AdminWrapper({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // STATE 2: Loading is complete AND the user is a verified admin.
-  // Only in this case do we render the children (the admin dashboard).
+  // If loading is complete, and we have a confirmed admin, show the dashboard.
   if (userProfile?.isAdmin) {
     return <>{children}</>;
   }
 
-  // STATE 3: Loading is complete but the user is NOT an admin.
-  // The useEffect is handling the redirect. In the meantime, we continue
-  // to show the loading screen to prevent any content from flashing.
+  // Otherwise, the user is not an admin and is being redirected.
+  // We continue to show the loading screen to prevent any content from flashing.
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
       <Logo className="h-24 w-24 animate-pulse text-primary" />

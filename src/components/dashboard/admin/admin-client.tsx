@@ -16,58 +16,24 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users, Leaf, Map, Tractor } from 'lucide-react';
-import type { User as FirebaseUser } from 'firebase/auth';
-import { useCollection, useFirestore } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
-import { useMemo } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 import type { FarmRecord, User } from '@/lib/types';
 
-export function AdminClient() {
-  const firestore = useFirestore();
+interface AdminClientProps {
+  users: User[];
+  farmRecords: FarmRecord[];
+}
 
-  const usersQuery = useMemo(() => {
-    return query(collection(firestore, 'users'));
-  }, [firestore]);
-
-  const farmRecordsQuery = useMemo(() => {
-    return query(collection(firestore, 'farmRecords'));
-  }, [firestore]);
-
-  const { data: users, loading: usersLoading } = useCollection<User>(usersQuery);
-  const { data: farmRecords, loading: recordsLoading } =
-    useCollection<FarmRecord>(farmRecordsQuery);
-
-  const loading = usersLoading || recordsLoading;
-
-  if (loading) {
-    return (
-      <div className="space-y-8">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
-        </div>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-1/3" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+export function AdminClient({ users, farmRecords }: AdminClientProps) {
   const totalFarmers = users.length;
   const totalArea = users.reduce((sum, f) => sum + (f.totalArea || 0), 0);
   const totalRecords = farmRecords.length;
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('');
+  };
 
   return (
     <div className="space-y-8">
@@ -117,9 +83,11 @@ export function AdminClient() {
             </p>
           </CardContent>
         </Card>
-         <Card>
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active This Month</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active This Month
+            </CardTitle>
             <Leaf className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -155,7 +123,7 @@ export function AdminClient() {
                 <TableHead className="hidden sm:table-cell">
                   Total Area
                 </TableHead>
-                 <TableHead className="hidden sm:table-cell text-right">
+                <TableHead className="hidden sm:table-cell text-right">
                   Record Count
                 </TableHead>
               </TableRow>
@@ -170,7 +138,9 @@ export function AdminClient() {
                           src={`https://picsum.photos/seed/${farmer.id}/40/40`}
                           alt="Avatar"
                         />
-                        <AvatarFallback>{farmer.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>
+                          {getInitials(farmer.name)}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="grid gap-0.5">
                         <p className="font-medium">{farmer.name}</p>
@@ -184,8 +154,11 @@ export function AdminClient() {
                   <TableCell className="hidden sm:table-cell">
                     {farmer.totalArea || 0} ha
                   </TableCell>
-                   <TableCell className="hidden sm:table-cell text-right">
-                    {farmRecords.filter(r => r.farmerId === farmer.id).length}
+                  <TableCell className="hidden sm:table-cell text-right">
+                    {
+                      farmRecords.filter((r) => r.farmerId === farmer.id)
+                        .length
+                    }
                   </TableCell>
                 </TableRow>
               ))}
