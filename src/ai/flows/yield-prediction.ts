@@ -37,7 +37,7 @@ export async function yieldPrediction(
   }
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: 'gemini-pro',
+    model: 'models/gemini-pro',
     generationConfig: {
       responseMimeType: 'application/json',
     },
