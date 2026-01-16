@@ -1,34 +1,53 @@
 'use client';
 
 import { useUser } from '@/firebase/auth/use-user';
-import { useDoc } from '@/firebase';
+import { useDoc, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Logo } from '../icons';
+import { useEffect, useState, useMemo } from 'react';
 import { doc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase/provider';
+import { Logo } from '@/components/icons';
+
+type VerificationStatus = 'VERIFYING' | 'ALLOWED' | 'DENIED';
 
 export function AdminWrapper({ children }: { children: React.ReactNode }) {
   const { user, loading: userLoading } = useUser();
-  const router = useRouter();
   const firestore = useFirestore();
+  const router = useRouter();
 
-  const userDocRef = user ? doc(firestore, `users/${user.uid}`) : null;
+  const [status, setStatus] = useState<VerificationStatus>('VERIFYING');
+
+  const userDocRef = useMemo(() => {
+    // Memoize the doc ref so it's stable across re-renders until the user changes.
+    if (!user || !firestore) return null;
+    return doc(firestore, `users/${user.uid}`);
+  }, [user, firestore]);
+  
   const { data: userProfile, loading: profileLoading } = useDoc<any>(userDocRef);
 
-  const isLoading = userLoading || (user && profileLoading);
-
   useEffect(() => {
-    if (!isLoading) {
-      if (!userProfile?.isAdmin) {
-        // If loading is complete and the user is not an admin, redirect.
-        router.replace('/dashboard');
+    // This effect's only job is to determine the final status once all data is loaded.
+    const doneLoading = !userLoading && !profileLoading;
+
+    if (doneLoading) {
+      if (userProfile?.isAdmin) {
+        setStatus('ALLOWED');
+      } else {
+        // This covers cases where the user is not an admin, or has no profile doc.
+        setStatus('DENIED');
       }
     }
-  }, [isLoading, userProfile, router]);
+  }, [userLoading, profileLoading, userProfile]);
 
-  // While we are verifying auth and admin status, show the loading screen.
-  if (isLoading) {
+  useEffect(() => {
+    // This effect handles the side-effect of redirection when status is DENIED.
+    if (status === 'DENIED') {
+      router.replace('/dashboard');
+    }
+  }, [status, router]);
+
+  // While we are verifying, or if the user has been denied (and is being redirected),
+  // show the loading screen. This prevents any content flash.
+  if (status !== 'ALLOWED') {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
         <Logo className="h-24 w-24 animate-pulse text-primary" />
@@ -39,19 +58,6 @@ export function AdminWrapper({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If loading is complete, and we have a confirmed admin, show the dashboard.
-  if (userProfile?.isAdmin) {
-    return <>{children}</>;
-  }
-
-  // Otherwise, the user is not an admin and is being redirected.
-  // We continue to show the loading screen to prevent any content from flashing.
-  return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
-      <Logo className="h-24 w-24 animate-pulse text-primary" />
-      <p className="mt-4 text-lg text-muted-foreground">
-        Verifying permissions...
-      </p>
-    </div>
-  );
+  // If status is definitively ALLOWED, render the protected content.
+  return <>{children}</>;
 }
