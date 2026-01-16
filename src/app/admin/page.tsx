@@ -6,7 +6,7 @@ import { useCollection, useFirestore } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { useMemo } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { FarmRecord, User } from '@/lib/types';
 
 // This file is essentially the admin dashboard but at a top-level /admin route.
@@ -23,11 +23,32 @@ export default function AdminPageRoot() {
     return query(collection(firestore, 'farmRecords'));
   }, [firestore]);
 
-  const { data: users, loading: usersLoading } = useCollection<User>(usersQuery);
-  const { data: farmRecords, loading: recordsLoading } =
+  const { data: users, loading: usersLoading, error: usersError } = useCollection<User>(usersQuery);
+  const { data: farmRecords, loading: recordsLoading, error: recordsError } =
     useCollection<FarmRecord>(farmRecordsQuery);
 
   const loading = usersLoading || recordsLoading;
+  const error = usersError || recordsError;
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-8">
+        <PageHeader
+          title="Admin Dashboard"
+          description="Error loading data."
+        />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-destructive">Permission Denied</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>You do not have permission to view this data. Please ensure you are logged in as an administrator and have the correct permissions set in your Firestore user record.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Error: {error.message}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-8">

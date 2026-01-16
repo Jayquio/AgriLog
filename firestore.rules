@@ -32,8 +32,7 @@ service cloud.firestore {
        allow create: if isSignedIn() && request.resource.data.farmerId == request.auth.uid;
        allow update: if isSignedIn() && resource.data.farmerId == request.auth.uid && request.resource.data.farmerId == resource.data.farmerId;
        
-       // Users can only list their own records (via query). Admins can list all.
-       allow list: if isSignedIn();
+       // allow list is intentionally omitted; queries are governed by read permissions.
     }
   }
 }
