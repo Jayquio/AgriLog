@@ -55,16 +55,12 @@ export function AppSidebar() {
 
   const menuItems = useMemo(() => {
     if (isAdmin) {
-      // If on the admin page, only show admin-related links.
-      if (pathname.startsWith('/admin')) {
-        return adminMenuItems;
-      }
-      // On the farmer dashboard, show farmer links AND an entry to the admin dash.
+      // Admins see all links, with admin links at the end.
       return [...farmerMenuItems, ...adminMenuItems];
     }
     // Non-admins only ever see farmer links.
     return farmerMenuItems;
-  }, [isAdmin, pathname]);
+  }, [isAdmin]);
 
 
   const handleLinkClick = () => {
