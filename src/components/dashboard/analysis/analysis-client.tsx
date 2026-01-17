@@ -25,7 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/firebase/auth/use-user";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import type { CostVsProfitAnalysisOutput } from "@/ai/flows/cost-vs-profit-analysis";
+import type { Analysis as CostVsProfitAnalysisOutput } from "@/ai/schemas/analysis";
 import {
   Table,
   TableBody,

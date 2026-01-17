@@ -4,8 +4,6 @@
 import { callLocalModelForYieldPrediction } from '@/ai/providers/local-model';
 import { YieldPredictionInputSchema, type YieldPredictionInput, type YieldPredictionOutput } from '@/ai/schemas/prediction';
 
-export type { YieldPredictionInput, YieldPredictionOutput };
-
 export async function yieldPrediction(input: YieldPredictionInput): Promise<YieldPredictionOutput> {
   const validationResult = YieldPredictionInputSchema.safeParse(input);
   if (!validationResult.success) {

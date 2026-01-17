@@ -5,9 +5,6 @@ import { callLocalModelForAnalysis } from '@/ai/providers/local-model';
 import { z } from 'zod';
 import type { Analysis as CostVsProfitAnalysisOutput } from '@/ai/schemas/analysis';
 
-// Re-export for compatibility with components that might import it
-export type { CostVsProfitAnalysisOutput };
-
 
 const CostVsProfitAnalysisInputSchema = z.object({
   farmRecords: z.array(
