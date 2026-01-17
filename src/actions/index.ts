@@ -1,13 +1,11 @@
+
 "use server";
 
 import { z } from "zod";
-import {
-  yieldPrediction,
-  YieldPredictionInput,
-} from "@/ai/flows/yield-prediction";
+import { yieldPrediction } from "@/ai/flows/yield-prediction";
 import {
   costVsProfitAnalysis,
-  CostVsProfitAnalysisInput,
+  type CostVsProfitAnalysisInput,
 } from "@/ai/flows/cost-vs-profit-analysis";
 import type { FarmRecord } from "@/lib/types";
 
