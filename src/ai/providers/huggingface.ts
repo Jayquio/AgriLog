@@ -54,10 +54,20 @@ export async function callHuggingFace(
 
   if (!res.ok) {
     const text = await res.text();
+    console.error('Hugging Face error response body:', text);
+
+    if (res.status === 410) {
+      throw new Error(
+        'Hugging Face 410: model not available. Check model availability. Raw: ' +
+          text
+      );
+    }
+
     // Normalize common HF errors for UI
     const message = (() => {
       if (res.status === 401) return 'Invalid Hugging Face API key.';
-      if (res.status === 429) return 'Hugging Face rate limit reached. Try again later.';
+      if (res.status === 429)
+        return 'Hugging Face rate limit reached. Try again later.';
       if (text.includes('Model loading') || text.includes('model is loading')) {
         return 'Model is warming up — please try again in a few seconds.';
       }
