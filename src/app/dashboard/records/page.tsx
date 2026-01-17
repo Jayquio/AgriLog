@@ -40,25 +40,23 @@ export default function RecordsPage() {
   const loading = userLoading || recordsLoading;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col gap-8">
-        <PageHeader
-          title="Farm Records"
-          description="A complete history of your farm's activities."
-        />
-        {loading ? (
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <Skeleton className="h-96 w-full" />
-            </div>
-            <div>
-              <Skeleton className="h-96 w-full" />
-            </div>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Farm Records"
+        description="A complete history of your farm's activities."
+      />
+      {loading ? (
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <Skeleton className="h-96 w-full" />
           </div>
-        ) : (
-          <RecordsClient records={records} />
-        )}
-      </div>
+          <div>
+            <Skeleton className="h-96 w-full" />
+          </div>
+        </div>
+      ) : (
+        <RecordsClient records={records} />
+      )}
     </div>
   );
 }

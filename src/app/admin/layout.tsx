@@ -16,7 +16,7 @@ export default function AdminLayout({
           <SidebarInset>
             <div className="flex h-full flex-col">
               <AppHeader />
-              <main className="flex-1 overflow-y-auto p-4 md:p-8">
+              <main className="container mx-auto flex-1 overflow-y-auto px-4 py-8">
                 {children}
               </main>
             </div>
