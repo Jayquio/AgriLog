@@ -2,7 +2,7 @@
 // Usage: callHuggingFace('google/flan-t5-large', 'Your prompt here')
 import fetch from 'node-fetch';
 
-const HF_API_URL = 'https://api-inference.huggingface.co/models';
+const HF_API_URL = 'https://router.huggingface.co/models';
 
 const hfKey = process.env.HUGGINGFACE_API_KEY;
 if (!hfKey) {
