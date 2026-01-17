@@ -1,4 +1,6 @@
+
 'use client';
+
 import { PageHeader } from "@/components/page-header";
 import { RecordsClient } from "@/components/dashboard/records/client";
 import type { FarmRecordWithProfit } from "@/lib/types";
@@ -8,15 +10,19 @@ import { collection, query, where } from "firebase/firestore";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-function getRecordsWithProfit(records: any[]): FarmRecordWithProfit[] {
-    if (!records) return [];
-    return records.map((record) => {
-      const revenue = record.harvestQuantity * record.marketPrice;
-      const profit = revenue - record.expenses;
+function getRecordsWithProfit(records: any[] | null | undefined): FarmRecordWithProfit[] {
+  if (!records) return [];
+  return records
+    .map((record) => {
+      const revenue = Number(record.harvestQuantity) * Number(record.marketPrice);
+      const profit = revenue - Number(record.expenses || 0);
       return { ...record, revenue, profit };
-    }).sort((a, b) => new Date(b.harvestDate).getTime() - new Date(a.harvestDate).getTime());
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.harvestDate ?? 0).getTime() - new Date(a.harvestDate ?? 0).getTime()
+    );
 }
-
 
 export default function RecordsPage() {
   const { user, loading: userLoading } = useUser();
@@ -32,7 +38,6 @@ export default function RecordsPage() {
   const records = useMemo(() => getRecordsWithProfit(farmRecords), [farmRecords]);
 
   const loading = userLoading || recordsLoading;
-
 
   return (
     <div className="container mx-auto px-4 py-8">

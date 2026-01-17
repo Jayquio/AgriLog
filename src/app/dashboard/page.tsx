@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PageHeader } from "@/components/page-header";
@@ -16,11 +17,11 @@ import { useMemo, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 
-function getRecordsWithProfit(records: any[]): FarmRecordWithProfit[] {
+function getRecordsWithProfit(records: any[] | null | undefined): FarmRecordWithProfit[] {
   if (!records) return [];
   return records.map((record) => {
-    const revenue = record.harvestQuantity * record.marketPrice;
-    const profit = revenue - record.expenses;
+    const revenue = Number(record.harvestQuantity) * Number(record.marketPrice);
+    const profit = revenue - Number(record.expenses || 0);
     return { ...record, revenue, profit };
   });
 }
@@ -33,7 +34,7 @@ export default function DashboardPage() {
   const userDocRef = useMemo(() => {
     if (!user) return null;
     return doc(firestore, `users/${user.uid}`);
-  },[user, firestore]);
+  }, [user, firestore]);
 
   const { data: userProfile, loading: profileLoading } = useDoc<any>(userDocRef);
 
@@ -47,22 +48,15 @@ export default function DashboardPage() {
   const initialDataLoading = userLoading || profileLoading;
 
   useEffect(() => {
-    // Once we are done loading user and profile data...
     if (!initialDataLoading) {
-      // and we have confirmed the user is an admin...
       if (userProfile?.isAdmin) {
-        // ...redirect them to the new top-level admin page.
         router.replace('/admin');
       }
     }
   }, [initialDataLoading, userProfile, router]);
 
-
   const recordsWithProfit = useMemo(() => getRecordsWithProfit(farmRecords), [farmRecords]);
 
-
-  // If the initial data is still loading, OR if the user is an admin
-  // (and is currently being redirected), show the loading skeleton.
   if (initialDataLoading || userProfile?.isAdmin) {
     return (
       <div className="container mx-auto px-4">
@@ -90,7 +84,6 @@ export default function DashboardPage() {
     );
   }
 
-  // Otherwise, render the farmer's dashboard.
   return (
     <div className="container mx-auto px-4">
       <div className="flex flex-col gap-8 py-8">
